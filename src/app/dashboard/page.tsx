@@ -3,13 +3,15 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { FileText, Calendar, Users, Plus, Table } from "lucide-react";
+import { FileText, Calendar, Users, Plus, Table, GraduationCap } from "lucide-react";
 
 interface Stats {
   rppCount: number;
   protaCount: number;
   promesCount: number;
   userCount?: number;
+  myExamsCount: number;
+  totalExamsCount: number;
 }
 
 interface User {
@@ -46,26 +48,30 @@ useEffect(() => {
       }
 
       try {
-        const [rppRes, protaRes, promesRes, adminRes] = await Promise.all([
+        const [rppRes, protaRes, promesRes, adminRes, examStatsRes] = await Promise.all([
           fetch("/api/rpp", { headers: { Authorization: `Bearer ${token}` } }),
           fetch("/api/prota", { headers: { Authorization: `Bearer ${token}` } }),
           fetch("/api/promes", { headers: { Authorization: `Bearer ${token}` } }),
           fetch("/api/admin/users", { headers: { Authorization: `Bearer ${token}` } }),
+          fetch("/api/exam/stats", { headers: { Authorization: `Bearer ${token}` } }),
         ]);
 
-        const [rppData, protaData, promesData, adminData] = await Promise.all([
+        const [rppData, protaData, promesData, adminData, examStatsData] = await Promise.all([
           rppRes.json(),
           protaRes.json(),
           promesRes.json(),
           adminRes.json(),
+          examStatsRes.json(),
         ]);
 
         const rppCount = rppData.success ? rppData.data.length : 0;
         const protaCount = protaData.success ? protaData.data.length : 0;
         const promesCount = promesData.success ? promesData.data.length : 0;
         const userCount = (adminRes.ok && adminData.success) ? adminData.data.length : 0;
+        const myExamsCount = examStatsData.success ? examStatsData.data.myExamsCount : 0;
+        const totalExamsCount = examStatsData.success ? examStatsData.data.totalExamsCount : 0;
 
-        setStats({ rppCount, protaCount, promesCount, userCount });
+        setStats({ rppCount, protaCount, promesCount, userCount, myExamsCount, totalExamsCount });
         setUser(rppData.user);
       } catch (error) {
         console.error("Failed to fetch stats:", error);
@@ -143,6 +149,38 @@ useEffect(() => {
             </div>
           </div>
         </Link>
+
+        <Link
+          href="/dashboard/exam"
+          className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-orange-100 dark:bg-orange-900 rounded-xl flex items-center justify-center">
+              <GraduationCap className="text-orange-600 dark:text-orange-400" size={28} />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Ujian Saya</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats?.myExamsCount || 0}</p>
+            </div>
+          </div>
+        </Link>
+
+        {isAdmin && (
+          <Link
+            href="/dashboard/exam"
+            className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-rose-100 dark:bg-rose-900 rounded-xl flex items-center justify-center">
+                <GraduationCap className="text-rose-600 dark:text-rose-400" size={28} />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Total Ujian</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats?.totalExamsCount || 0}</p>
+              </div>
+            </div>
+          </Link>
+        )}
 
         {isAdmin && (
           <Link

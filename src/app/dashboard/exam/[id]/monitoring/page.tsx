@@ -166,11 +166,14 @@ export default function MonitoringPage() {
     );
   };
 
-  const handleAnswerScoreBlur = (questionId: string) => {
+  const handleAnswerScoreBlur = (questionId: string, rawValue: string) => {
     if (!selectedStudent) return;
-    const answer = selectedStudent.answers.find((a) => a.questionId === questionId);
-    if (!answer || answer.score === null) return;
-    saveAnswerScore(selectedStudent.id, questionId, answer.score);
+    const val = parseInt(rawValue);
+    if (isNaN(val) || val < 0) return;
+    setSelectedStudent((prev) =>
+      prev ? { ...prev, answers: prev.answers.map((a) => a.questionId === questionId ? { ...a, score: val } : a) } : null
+    );
+    saveAnswerScore(selectedStudent.id, questionId, val);
   };
 
   const handleCalculateScores = async () => {
@@ -490,7 +493,7 @@ export default function MonitoringPage() {
                             </p>
                             <input type="number" value={a.score ?? ""}
                               onChange={(e) => handleAnswerScoreChange(a.questionId, e.target.value)}
-                              onBlur={() => handleAnswerScoreBlur(a.questionId)}
+                              onBlur={(e) => handleAnswerScoreBlur(a.questionId, e.target.value)}
                               placeholder="0"
                               className="w-14 px-1 py-0.5 text-center border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-xs shrink-0" />
                           </div>
